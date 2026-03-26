@@ -1,0 +1,71 @@
+/* Card death transition */
+.monster-card.is-dead {
+  opacity: 0.25;
+  filter: grayscale(1) brightness(0.6);
+  transform: scale(0.9);
+  pointer-events: none;
+}
+
+/* TransitionGroup for card grid */
+.card-list-enter-active,
+.card-list-leave-active {
+  transition: all var(--transition-slow);
+}
+.card-list-enter-from {
+  opacity: 0;
+  transform: scale(0.8) translateY(20px);
+}
+.card-list-leave-to {
+  opacity: 0;
+  transform: scale(0.85);
+}
+.card-list-move {
+  transition: transform var(--transition-slow);
+}
+
+/* Modal transitions */
+.modal-overlay-enter-active,
+.modal-overlay-leave-active {
+  transition: opacity var(--transition-base);
+}
+.modal-overlay-enter-from,
+.modal-overlay-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-active,
+.modal-leave-active {
+  transition: all var(--transition-base);
+}
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+  transform: scale(0.94) translateY(-10px);
+}
+
+/* HP flash on damage */
+@keyframes damage-flash {
+  0% { background-color: rgba(233, 69, 96, 0.3); }
+  100% { background-color: transparent; }
+}
+.damage-flash {
+  animation: damage-flash 0.5s ease-out;
+}
+
+/* HP flash on heal */
+@keyframes heal-flash {
+  0% { background-color: rgba(76, 175, 128, 0.3); }
+  100% { background-color: transparent; }
+}
+.heal-flash {
+  animation: heal-flash 0.5s ease-out;
+}
+
+/* Pulse for round advance */
+@keyframes round-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201, 168, 76, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(201, 168, 76, 0); }
+}
+.round-pulse {
+  animation: round-pulse 0.5s ease-out;
+}

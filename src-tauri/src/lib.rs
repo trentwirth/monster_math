@@ -9,7 +9,7 @@ pub struct RoundRecord {
 }
 
 #[tauri::command]
-pub async fn export_combat_csv(
+async fn export_combat_csv(
     app: tauri::AppHandle,
     session_id: String,
     player_ids: Vec<String>,

@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    monster_math_scaffold_lib::run()
+    monster_math_lib::run()
 }

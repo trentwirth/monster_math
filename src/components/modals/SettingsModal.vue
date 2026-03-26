@@ -13,23 +13,21 @@
               <!-- Players section -->
               <section class="settings-section">
                 <h3 class="settings-section__title">Players & Turn Order</h3>
-                <p class="settings-section__hint text-muted text-sm">Add players in initiative order. Drag to reorder.</p>
+                <p class="settings-section__hint text-muted text-sm">Add players in initiative order. Use ▲▼ to reorder.</p>
 
                 <div class="player-list" v-if="settingsStore.players.length > 0">
                   <div
                     v-for="(pid, idx) in localOrder"
                     :key="pid"
                     class="player-row"
-                    draggable="true"
-                    @dragstart="onDragStart(idx)"
-                    @dragover.prevent="onDragOver(idx)"
-                    @drop="onDrop(idx)"
-                    :class="{ 'drag-over': dragOverIdx === idx }"
                   >
-                    <span class="player-row__handle">⠿</span>
+                    <span class="player-row__turn-badge">{{ idx + 1 }}</span>
                     <span class="player-row__name">{{ getPlayerName(pid) }}</span>
-                    <span class="player-row__turn">Turn {{ idx + 1 }}</span>
-                    <IconButton variant="danger" small title="Remove player" @click="removePlayer(pid)">✕</IconButton>
+                    <div class="player-row__actions">
+                      <IconButton variant="ghost" small title="Move up" :disabled="idx === 0" @click="movePlayer(idx, -1)">▲</IconButton>
+                      <IconButton variant="ghost" small title="Move down" :disabled="idx === localOrder.length - 1" @click="movePlayer(idx, 1)">▼</IconButton>
+                      <IconButton variant="danger" small title="Remove player" @click="removePlayer(pid)">✕</IconButton>
+                    </div>
                   </div>
                 </div>
                 <p v-else class="text-muted text-sm" style="padding: var(--space-3) 0;">No players yet.</p>
@@ -93,8 +91,6 @@ const ruleSets = listRuleSets()
 const selectedRuleset = ref(settingsStore.activeRulesetId)
 const newPlayerName = ref('')
 const localOrder = ref([...settingsStore.turnOrder])
-const dragIdx = ref(-1)
-const dragOverIdx = ref(-1)
 
 watch(() => settingsStore.turnOrder, (order) => {
   localOrder.value = [...order]
@@ -117,17 +113,12 @@ function removePlayer(pid: string) {
   localOrder.value = [...settingsStore.turnOrder]
 }
 
-function onDragStart(idx: number) { dragIdx.value = idx }
-function onDragOver(idx: number) { dragOverIdx.value = idx }
-function onDrop(toIdx: number) {
-  const fromIdx = dragIdx.value
-  if (fromIdx === toIdx) return
+function movePlayer(idx: number, direction: -1 | 1) {
+  const toIdx = idx + direction
+  if (toIdx < 0 || toIdx >= localOrder.value.length) return
   const arr = [...localOrder.value]
-  const [item] = arr.splice(fromIdx, 1)
-  arr.splice(toIdx, 0, item)
+  ;[arr[idx], arr[toIdx]] = [arr[toIdx], arr[idx]]
   localOrder.value = arr
-  dragIdx.value = -1
-  dragOverIdx.value = -1
 }
 
 function save() {
@@ -212,14 +203,23 @@ function onClose() {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: var(--space-2) var(--space-3);
-  cursor: grab;
   transition: border-color var(--transition-fast), background-color var(--transition-fast);
 }
-.player-row:active { cursor: grabbing; }
-.player-row.drag-over { border-color: var(--color-accent-gold); background: var(--color-surface-hover); }
-.player-row__handle { color: var(--color-text-muted); font-size: 1rem; }
+.player-row__turn-badge {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-border-strong);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
 .player-row__name { flex: 1; font-weight: 600; }
-.player-row__turn { font-size: var(--text-xs); color: var(--color-text-muted); }
+.player-row__actions { display: flex; gap: var(--space-1); }
 .add-player-row {
   display: flex;
   gap: var(--space-2);

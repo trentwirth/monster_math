@@ -40,6 +40,7 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, onUnmounted } from 'vue'
 import { useCombatStore } from './stores/combat'
 import { useSettingsStore } from './stores/settings'
 import { useUiStore } from './stores/ui'
@@ -53,6 +54,26 @@ import EndCombatModal from './components/modals/EndCombatModal.vue'
 const combatStore = useCombatStore()
 const settingsStore = useSettingsStore()
 const uiStore = useUiStore()
+
+function onKeyDown(e: KeyboardEvent) {
+  // Don't fire when any modal is open or focus is on a text input
+  const anyModalOpen = uiStore.isSettingsModalOpen || uiStore.isAddMonsterModalOpen
+    || uiStore.isDeadPileOpen || uiStore.isEndCombatModalOpen || !settingsStore.isConfigured
+  if (anyModalOpen) return
+  const tag = (e.target as HTMLElement)?.tagName
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+
+  if (e.key === 'ArrowLeft') {
+    e.preventDefault()
+    combatStore.retreatTurn()
+  } else if (e.key === 'ArrowRight') {
+    e.preventDefault()
+    combatStore.advanceTurn()
+  }
+}
+
+onMounted(() => window.addEventListener('keydown', onKeyDown))
+onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
 
 function onAddMonster(data: Record<string, any>) {
   combatStore.addMonster(data as any)

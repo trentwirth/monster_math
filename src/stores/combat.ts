@@ -183,6 +183,16 @@ export const useCombatStore = defineStore('combat', () => {
     ]
   }
 
+  function reorderMonsters(fromId: string, toId: string) {
+    const fromIdx = monsters.value.findIndex(m => m.id === fromId)
+    const toIdx = monsters.value.findIndex(m => m.id === toId)
+    if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return
+    const arr = [...monsters.value]
+    const [item] = arr.splice(fromIdx, 1)
+    arr.splice(toIdx, 0, item)
+    monsters.value = arr
+  }
+
   function resetCombat() {
     monsters.value = []
     currentRound.value = 1
@@ -218,6 +228,7 @@ export const useCombatStore = defineStore('combat', () => {
     retreatTurn,
     advanceRound,
     buildRoundRecords,
+    reorderMonsters,
     resetCombat,
   }
 })

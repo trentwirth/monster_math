@@ -54,11 +54,10 @@ const stackOffsets = [
 .dead-pile__card {
   position: absolute;
   inset: 0;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-md);
-  opacity: 0.5;
-  filter: grayscale(1);
+  opacity: 0.85;
 }
 .dead-pile__info {
   display: flex;
@@ -69,10 +68,10 @@ const stackOffsets = [
 .dead-pile__count {
   font-size: var(--text-xl);
   font-weight: 800;
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
   line-height: 1;
 }
 .dead-pile__label {
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
 }
 </style>

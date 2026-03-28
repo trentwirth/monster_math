@@ -36,6 +36,16 @@
       @close="uiStore.closeEndCombat()"
       @confirmed="onEndCombat()"
     />
+
+    <ShortcutsModal
+      :show="uiStore.isShortcutsModalOpen"
+      @close="uiStore.closeShortcuts()"
+    />
+
+    <PlayerManagerModal
+      :show="uiStore.isPlayerManagerOpen"
+      @close="uiStore.closePlayerManager()"
+    />
   </div>
 </template>
 
@@ -50,15 +60,39 @@ import SettingsModal from './components/modals/SettingsModal.vue'
 import AddMonsterModal from './components/modals/AddMonsterModal.vue'
 import DeadPileModal from './components/modals/DeadPileModal.vue'
 import EndCombatModal from './components/modals/EndCombatModal.vue'
+import ShortcutsModal from './components/modals/ShortcutsModal.vue'
+import PlayerManagerModal from './components/modals/PlayerManagerModal.vue'
 
 const combatStore = useCombatStore()
 const settingsStore = useSettingsStore()
 const uiStore = useUiStore()
 
 function onKeyDown(e: KeyboardEvent) {
-  // Don't fire when any modal is open or focus is on a text input
+  const meta = e.metaKey || e.ctrlKey
   const anyModalOpen = uiStore.isSettingsModalOpen || uiStore.isAddMonsterModalOpen
-    || uiStore.isDeadPileOpen || uiStore.isEndCombatModalOpen || !settingsStore.isConfigured
+    || uiStore.isDeadPileOpen || uiStore.isEndCombatModalOpen || uiStore.isShortcutsModalOpen
+    || !settingsStore.isConfigured
+
+  // Cmd+N / Cmd+E — open add monster even if canvas has focus
+  if (meta && e.key === 'n') {
+    e.preventDefault()
+    if (!anyModalOpen) uiStore.openAddMonster('basic')
+    return
+  }
+  if (meta && e.key === 'e') {
+    e.preventDefault()
+    if (!anyModalOpen) uiStore.openAddMonster('elite')
+    return
+  }
+  if (meta && e.key === 'd') {
+    e.preventDefault()
+    if (!anyModalOpen && uiStore.selectedMonsterIds.length > 0) {
+      uiStore.selectedMonsterIds.forEach(id => combatStore.duplicateMonster(id))
+      uiStore.clearMonsterSelection()
+    }
+    return
+  }
+
   if (anyModalOpen) return
   const tag = (e.target as HTMLElement)?.tagName
   if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
@@ -69,6 +103,8 @@ function onKeyDown(e: KeyboardEvent) {
   } else if (e.key === 'ArrowRight') {
     e.preventDefault()
     combatStore.advanceTurn()
+  } else if (e.key === 'Escape') {
+    uiStore.clearMonsterSelection()
   }
 }
 
@@ -76,7 +112,16 @@ onMounted(() => window.addEventListener('keydown', onKeyDown))
 onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
 
 function onAddMonster(data: Record<string, any>) {
-  combatStore.addMonster(data as any)
+  const count = typeof data.duplicateCount === 'number' && data.duplicateCount > 1
+    ? data.duplicateCount : 0
+  if (count > 0) {
+    const baseName = data.name
+    for (let i = 1; i <= count; i++) {
+      combatStore.addMonster({ ...data, name: `${baseName} ${i}`, duplicateCount: undefined } as any)
+    }
+  } else {
+    combatStore.addMonster(data as any)
+  }
 }
 
 function onEndCombat() {

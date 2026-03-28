@@ -5,13 +5,19 @@ import type { Player } from '../types/player'
 
 const STORAGE_KEY = 'monster-math-settings'
 
+export interface PlayerSet {
+  id: string
+  name: string
+  playerNames: string[]
+}
+
 export const useSettingsStore = defineStore('settings', () => {
   const players = ref<Player[]>([])
   const turnOrder = ref<string[]>([])
   const activeRulesetId = ref('dnd5e')
   const isConfigured = ref(false)
+  const playerSets = ref<PlayerSet[]>([])
 
-  // Load from localStorage on init
   function load() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
@@ -21,6 +27,7 @@ export const useSettingsStore = defineStore('settings', () => {
         turnOrder.value = data.turnOrder ?? []
         activeRulesetId.value = data.activeRulesetId ?? 'dnd5e'
         isConfigured.value = data.isConfigured ?? false
+        playerSets.value = data.playerSets ?? []
       }
     } catch {
       // ignore corrupt data
@@ -33,6 +40,7 @@ export const useSettingsStore = defineStore('settings', () => {
       turnOrder: turnOrder.value,
       activeRulesetId: activeRulesetId.value,
       isConfigured: isConfigured.value,
+      playerSets: playerSets.value,
     }))
   }
 
@@ -72,6 +80,30 @@ export const useSettingsStore = defineStore('settings', () => {
     return players.value.find(p => p.id === id)?.name ?? 'Unknown'
   }
 
+  // Player Sets -----------------------------------------------------------
+
+  function savePlayerSet(setName: string, orderedIds: string[]) {
+    const names = orderedIds
+      .map(id => getPlayerName(id))
+      .filter(n => n !== 'Unknown')
+    if (names.length === 0) return
+    playerSets.value.push({ id: nanoid(), name: setName.trim(), playerNames: names })
+    persist()
+  }
+
+  function loadPlayerSet(setId: string) {
+    const set = playerSets.value.find(s => s.id === setId)
+    if (!set) return
+    players.value = set.playerNames.map(name => ({ id: nanoid(), name }))
+    turnOrder.value = players.value.map(p => p.id)
+    persist()
+  }
+
+  function deletePlayerSet(setId: string) {
+    playerSets.value = playerSets.value.filter(s => s.id !== setId)
+    persist()
+  }
+
   load()
 
   return {
@@ -79,6 +111,7 @@ export const useSettingsStore = defineStore('settings', () => {
     turnOrder,
     activeRulesetId,
     isConfigured,
+    playerSets,
     addPlayer,
     removePlayer,
     reorderTurns,
@@ -86,6 +119,9 @@ export const useSettingsStore = defineStore('settings', () => {
     markConfigured,
     getPlayerById,
     getPlayerName,
+    savePlayerSet,
+    loadPlayerSet,
+    deletePlayerSet,
     persist,
   }
 })

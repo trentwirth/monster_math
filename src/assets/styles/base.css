@@ -5,23 +5,23 @@
 }
 
 :root {
-  /* Color palette — dark dungeon theme */
-  --color-bg: #12121e;
-  --color-surface: #1c1c30;
-  --color-surface-alt: #252540;
-  --color-surface-hover: #2e2e50;
-  --color-border: #2d2d55;
-  --color-border-strong: #4040aa;
-  --color-accent: #e94560;
-  --color-accent-hover: #ff5575;
-  --color-accent-gold: #c9a84c;
-  --color-accent-gold-hover: #e0bf66;
-  --color-text-primary: #e8e8f0;
-  --color-text-secondary: #a0a0c0;
-  --color-text-muted: #666688;
-  --color-success: #4caf80;
-  --color-warning: #f0b040;
-  --color-dead-overlay: rgba(18, 18, 30, 0.6);
+  /* Dungeon Charcoal + Torchlight theme */
+  --color-bg: #141410;
+  --color-surface: #1e1e18;
+  --color-surface-alt: #272720;
+  --color-surface-hover: #303028;
+  --color-border: #3c3a2e;
+  --color-border-strong: #5c5840;
+  --color-accent: #e0921a;          /* torchlight amber */
+  --color-accent-hover: #f0a628;
+  --color-accent-gold: #c07010;     /* deep bronze for elite */
+  --color-accent-gold-hover: #d8851a;
+  --color-text-primary: #ede4c0;    /* ghostly warm white */
+  --color-text-secondary: #9c8c62;
+  --color-text-muted: #5a5038;
+  --color-success: #74aa38;
+  --color-warning: #c87818;
+  --color-dead-overlay: rgba(20, 20, 16, 0.6);
 
   /* Spacing (8-point grid) */
   --space-1: 4px;
@@ -51,10 +51,10 @@
   --radius-xl: 16px;
 
   /* Shadows */
-  --shadow-card: 0 2px 16px rgba(0, 0, 0, 0.5);
-  --shadow-elite: 0 2px 20px rgba(201, 168, 76, 0.15);
-  --shadow-modal: 0 8px 48px rgba(0, 0, 0, 0.8);
-  --shadow-inset: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 2px 20px rgba(0, 0, 0, 0.65);
+  --shadow-elite: 0 2px 24px rgba(192, 112, 16, 0.2);
+  --shadow-modal: 0 8px 48px rgba(0, 0, 0, 0.88);
+  --shadow-inset: inset 0 1px 3px rgba(0, 0, 0, 0.5);
 
   /* Transitions */
   --transition-fast: 0.15s ease;

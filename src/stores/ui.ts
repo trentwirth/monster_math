@@ -7,6 +7,12 @@ export const useUiStore = defineStore('ui', () => {
   const addMonsterModalType = ref<'basic' | 'elite' | null>(null)
   const isSettingsModalOpen = ref(false)
   const isEndCombatModalOpen = ref(false)
+  const isShortcutsModalOpen = ref(false)
+  const isPlayerManagerOpen = ref(false)
+
+  // Multi-select state
+  const selectedMonsterIds = ref<string[]>([])
+  const lastClickedMonsterId = ref<string | null>(null)
 
   function openDeadPile() { isDeadPileOpen.value = true }
   function closeDeadPile() { isDeadPileOpen.value = false }
@@ -26,12 +32,52 @@ export const useUiStore = defineStore('ui', () => {
   function openEndCombat() { isEndCombatModalOpen.value = true }
   function closeEndCombat() { isEndCombatModalOpen.value = false }
 
+  function openShortcuts() { isShortcutsModalOpen.value = true }
+  function closeShortcuts() { isShortcutsModalOpen.value = false }
+
+  function openPlayerManager() { isPlayerManagerOpen.value = true }
+  function closePlayerManager() { isPlayerManagerOpen.value = false }
+
+  function toggleMonsterSelection(id: string) {
+    const idx = selectedMonsterIds.value.indexOf(id)
+    if (idx === -1) {
+      selectedMonsterIds.value.push(id)
+    } else {
+      selectedMonsterIds.value.splice(idx, 1)
+    }
+    lastClickedMonsterId.value = id
+  }
+
+  function rangeSelectMonsters(toId: string, allIds: string[]) {
+    const anchor = lastClickedMonsterId.value ?? toId
+    const fromIdx = allIds.indexOf(anchor)
+    const toIdx = allIds.indexOf(toId)
+    if (fromIdx === -1 || toIdx === -1) {
+      toggleMonsterSelection(toId)
+      return
+    }
+    const [start, end] = fromIdx <= toIdx ? [fromIdx, toIdx] : [toIdx, fromIdx]
+    for (let i = start; i <= end; i++) {
+      if (!selectedMonsterIds.value.includes(allIds[i])) {
+        selectedMonsterIds.value.push(allIds[i])
+      }
+    }
+  }
+
+  function clearMonsterSelection() {
+    selectedMonsterIds.value = []
+    lastClickedMonsterId.value = null
+  }
+
   return {
     isDeadPileOpen,
     isAddMonsterModalOpen,
     addMonsterModalType,
     isSettingsModalOpen,
     isEndCombatModalOpen,
+    isShortcutsModalOpen,
+    selectedMonsterIds,
+    lastClickedMonsterId,
     openDeadPile,
     closeDeadPile,
     openAddMonster,
@@ -40,5 +86,13 @@ export const useUiStore = defineStore('ui', () => {
     closeSettings,
     openEndCombat,
     closeEndCombat,
+    openShortcuts,
+    closeShortcuts,
+    isPlayerManagerOpen,
+    openPlayerManager,
+    closePlayerManager,
+    toggleMonsterSelection,
+    rangeSelectMonsters,
+    clearMonsterSelection,
   }
 })

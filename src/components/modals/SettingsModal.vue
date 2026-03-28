@@ -12,21 +12,20 @@
             <div class="modal-body">
               <!-- Players section -->
               <section class="settings-section">
-                <h3 class="settings-section__title">Players & Turn Order</h3>
+                <div class="players-header">
+                  <h3 class="settings-section__title">Players & Turn Order</h3>
+                  <IconButton variant="ghost" title="Manage player sets" @click="uiStore.openPlayerManager()">⚙</IconButton>
+                </div>
                 <p class="settings-section__hint text-muted text-sm">Add players in initiative order. Use ▲▼ to reorder.</p>
 
                 <div class="player-list" v-if="settingsStore.players.length > 0">
-                  <div
-                    v-for="(pid, idx) in localOrder"
-                    :key="pid"
-                    class="player-row"
-                  >
+                  <div v-for="(pid, idx) in localOrder" :key="pid" class="player-row">
                     <span class="player-row__turn-badge">{{ idx + 1 }}</span>
                     <span class="player-row__name">{{ getPlayerName(pid) }}</span>
                     <div class="player-row__actions">
-                      <IconButton variant="ghost" small title="Move up" :disabled="idx === 0" @click="movePlayer(idx, -1)">▲</IconButton>
-                      <IconButton variant="ghost" small title="Move down" :disabled="idx === localOrder.length - 1" @click="movePlayer(idx, 1)">▼</IconButton>
-                      <IconButton variant="danger" small title="Remove player" @click="removePlayer(pid)">✕</IconButton>
+                      <IconButton variant="ghost" small title="Move up"   :disabled="idx === 0"                     @click="movePlayer(idx, -1)">▲</IconButton>
+                      <IconButton variant="ghost" small title="Move down" :disabled="idx === localOrder.length - 1" @click="movePlayer(idx,  1)">▼</IconButton>
+                      <IconButton variant="danger" small title="Remove"   @click="removePlayer(pid)">✕</IconButton>
                     </div>
                   </div>
                 </div>
@@ -36,7 +35,7 @@
                   <input
                     type="text"
                     class="add-player-input"
-                    placeholder="Player name..."
+                    placeholder="Player name…"
                     v-model="newPlayerName"
                     @keydown.enter="addPlayer"
                     maxlength="30"
@@ -66,6 +65,7 @@
             </div>
 
             <div class="modal-footer">
+              <button class="btn-ghost" @click="openShortcuts">⌨ Shortcuts</button>
               <button class="btn-primary" @click="save" :disabled="settingsStore.players.length === 0">
                 {{ isFirstLaunch ? 'Start Combat →' : 'Save Settings' }}
               </button>
@@ -80,6 +80,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useSettingsStore } from '../../stores/settings'
+import { useUiStore } from '../../stores/ui'
 import { listRuleSets } from '../../rulesets/index'
 import IconButton from '../shared/IconButton.vue'
 
@@ -87,11 +88,13 @@ const props = defineProps<{ show: boolean; isFirstLaunch?: boolean }>()
 const emit = defineEmits(['close'])
 
 const settingsStore = useSettingsStore()
+const uiStore = useUiStore()
 const ruleSets = listRuleSets()
 const selectedRuleset = ref(settingsStore.activeRulesetId)
 const newPlayerName = ref('')
 const localOrder = ref([...settingsStore.turnOrder])
 
+// Keep in sync when a set is loaded from the Player Manager
 watch(() => settingsStore.turnOrder, (order) => {
   localOrder.value = [...order]
 }, { deep: true })
@@ -131,6 +134,11 @@ function save() {
 function onClose() {
   if (!props.isFirstLaunch) emit('close')
 }
+
+function openShortcuts() {
+  emit('close')
+  uiStore.openShortcuts()
+}
 </script>
 
 <style scoped>
@@ -164,9 +172,7 @@ function onClose() {
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
-.modal-header h2 {
-  font-size: var(--text-xl);
-}
+.modal-header h2 { font-size: var(--text-xl); }
 .modal-body {
   flex: 1;
   overflow-y: auto;
@@ -179,15 +185,37 @@ function onClose() {
   padding: var(--space-4) var(--space-6);
   border-top: 1px solid var(--color-border);
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+}
+.btn-ghost {
+  padding: var(--space-2) var(--space-4);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+.btn-ghost:hover {
+  border-color: var(--color-border-strong);
+  color: var(--color-text-primary);
 }
 .settings-section__title {
   font-size: var(--text-md);
   font-weight: 700;
   margin-bottom: var(--space-2);
 }
-.settings-section__hint {
-  margin-bottom: var(--space-3);
+.settings-section__hint { margin-bottom: var(--space-3); }
+
+.players-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
 }
 .player-list {
   display: flex;
@@ -203,14 +231,13 @@ function onClose() {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: var(--space-2) var(--space-3);
-  transition: border-color var(--transition-fast), background-color var(--transition-fast);
 }
 .player-row__turn-badge {
   width: 20px;
   height: 20px;
   border-radius: 50%;
   background: var(--color-border-strong);
-  color: var(--color-text-muted);
+  color: var(--color-accent);
   font-size: var(--text-xs);
   font-weight: 700;
   display: flex;
@@ -220,10 +247,7 @@ function onClose() {
 }
 .player-row__name { flex: 1; font-weight: 600; }
 .player-row__actions { display: flex; gap: var(--space-1); }
-.add-player-row {
-  display: flex;
-  gap: var(--space-2);
-}
+.add-player-row { display: flex; gap: var(--space-2); }
 .add-player-input {
   flex: 1;
   background: var(--color-bg);
@@ -235,10 +259,7 @@ function onClose() {
   font-size: var(--text-base);
   transition: border-color var(--transition-fast);
 }
-.add-player-input:focus {
-  border-color: var(--color-accent);
-  outline: none;
-}
+.add-player-input:focus { border-color: var(--color-accent); outline: none; }
 .add-player-input::placeholder { color: var(--color-text-muted); }
 .add-player-btn {
   padding: var(--space-2) var(--space-4);
@@ -251,16 +272,11 @@ function onClose() {
   cursor: pointer;
   transition: background-color var(--transition-fast), border-color var(--transition-fast);
 }
-.add-player-btn:hover:not(:disabled) {
-  background: var(--color-surface-hover);
-  border-color: var(--color-border-strong);
-}
+.add-player-btn:hover:not(:disabled) { background: var(--color-surface-hover); border-color: var(--color-border-strong); }
 .add-player-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.ruleset-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
+
+/* ── Ruleset ── */
+.ruleset-list { display: flex; flex-direction: column; gap: var(--space-2); }
 .ruleset-option {
   display: flex;
   align-items: center;
@@ -276,6 +292,7 @@ function onClose() {
 .ruleset-option input[type="radio"] { accent-color: var(--color-accent-gold); }
 .ruleset-option__info { display: flex; flex-direction: column; gap: 2px; }
 .ruleset-option__name { font-weight: 600; }
+
 .btn-primary {
   padding: var(--space-3) var(--space-6);
   background: var(--color-accent);
@@ -289,4 +306,10 @@ function onClose() {
 }
 .btn-primary:hover:not(:disabled) { background: var(--color-accent-hover); }
 .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Transitions */
+.modal-overlay-enter-active, .modal-overlay-leave-active { transition: opacity 0.2s ease; }
+.modal-overlay-enter-from, .modal-overlay-leave-to { opacity: 0; }
+.modal-enter-active, .modal-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
+.modal-enter-from, .modal-leave-to { opacity: 0; transform: scale(0.97) translateY(-6px); }
 </style>

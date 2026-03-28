@@ -183,6 +183,46 @@ export const useCombatStore = defineStore('combat', () => {
     ]
   }
 
+  function duplicateMonster(id: string) {
+    const original = monsters.value.find(m => m.id === id)
+    if (!original) return
+
+    // Strip trailing number to get base name  e.g. "Goblin 2" → "Goblin"
+    const baseName = original.name.replace(/ \d+$/, '').trim()
+
+    // All cards sharing this base name (numbered or not)
+    const family = monsters.value.filter(m =>
+      m.name === baseName || m.name.match(new RegExp(`^${baseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} \\d+$`))
+    )
+
+    // Rename original to "BaseName 1" if it isn't already numbered
+    if (!/ \d+$/.test(original.name)) {
+      const origIdx = monsters.value.findIndex(m => m.id === id)
+      monsters.value[origIdx] = { ...monsters.value[origIdx], name: `${baseName} 1` }
+    }
+
+    // Highest number currently in the family
+    const maxNum = family.reduce((max, m) => {
+      const match = m.name.match(/ (\d+)$/)
+      return match ? Math.max(max, parseInt(match[1])) : Math.max(max, 1)
+    }, 1)
+
+    const src = monsters.value.find(m => m.id === id)!
+    const clone: Monster = {
+      ...src,
+      id: nanoid(),
+      name: `${baseName} ${maxNum + 1}`,
+      currentHp: src.maxHp,
+      isDead: false,
+      ...(src.type === 'elite' ? {
+        legendaryResistancesUsed: 0,
+        legendaryActionsUsed: 0,
+        lairActionsUsed: 0,
+      } : {}),
+    }
+    monsters.value.push(clone)
+  }
+
   function reorderMonsters(fromId: string, toId: string) {
     const fromIdx = monsters.value.findIndex(m => m.id === fromId)
     const toIdx = monsters.value.findIndex(m => m.id === toId)
@@ -228,6 +268,7 @@ export const useCombatStore = defineStore('combat', () => {
     retreatTurn,
     advanceRound,
     buildRoundRecords,
+    duplicateMonster,
     reorderMonsters,
     resetCombat,
   }

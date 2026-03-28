@@ -1,8 +1,15 @@
 <template>
   <div
     class="monster-card"
-    :class="{ 'is-dead': monster.isDead, 'monster-card--elite': monster.type === 'elite' }"
+    :class="{
+      'is-dead': monster.isDead,
+      'monster-card--elite': monster.type === 'elite',
+      'is-selected': selected,
+    }"
   >
+    <!-- Subtle drag-zone tint at top of card -->
+    <div class="card-grab-zone" />
+
     <BasicMonsterCard
       v-if="monster.type === 'basic'"
       :monster="monster"
@@ -34,6 +41,7 @@ defineProps<{
   monster: Monster
   players: Player[]
   currentPlayerId?: string
+  selected?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -57,17 +65,41 @@ function onDamage(amount: number, playerId: string) {
   box-shadow: var(--shadow-card);
   width: 260px;
   flex-shrink: 0;
-  transition: opacity var(--transition-slow), transform var(--transition-slow), filter var(--transition-slow);
+  transition: opacity var(--transition-slow), transform var(--transition-slow),
+    filter var(--transition-slow), box-shadow var(--transition-fast);
   position: relative;
+  overflow: hidden;
 }
+
+/* Header grab zone — subtle tint that deepens on hover */
+.card-grab-zone {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 54px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 0%, transparent 100%);
+  pointer-events: none;
+  transition: background var(--transition-fast);
+}
+.monster-card:hover .card-grab-zone {
+  background: linear-gradient(to bottom, rgba(224, 146, 26, 0.07) 0%, transparent 100%);
+}
+
 .monster-card--elite {
   border-top: 3px solid var(--color-accent-gold);
   box-shadow: var(--shadow-elite);
 }
 .monster-card.is-dead {
-  opacity: 0.25;
-  filter: grayscale(1) brightness(0.6);
+  opacity: 0.22;
+  filter: grayscale(1) brightness(0.55);
   transform: scale(0.9);
   pointer-events: none;
+}
+.monster-card.is-selected {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 22px rgba(224, 146, 26, 0.28);
 }
 </style>

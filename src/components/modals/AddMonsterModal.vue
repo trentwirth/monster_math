@@ -71,6 +71,24 @@
                 </div>
               </template>
 
+              <!-- Duplicate section -->
+              <div class="field duplicate-field">
+                <label class="toggle-label">
+                  <input type="checkbox" v-model="isDuplicate" />
+                  <span>Duplicate?</span>
+                </label>
+                <input
+                  type="number"
+                  class="text-input duplicate-count"
+                  :class="{ 'duplicate-count--disabled': !isDuplicate }"
+                  placeholder="How many? (e.g. 5)"
+                  v-model.number="duplicateCount"
+                  :disabled="!isDuplicate"
+                  min="2"
+                  max="20"
+                />
+              </div>
+
               <p v-if="error" class="error-msg">{{ error }}</p>
             </div>
 
@@ -107,6 +125,8 @@ const legendaryActionPoints = ref(3)
 const hasLairActions = ref(false)
 const lairActionCount = ref<number | null>(null)
 const error = ref('')
+const isDuplicate = ref(false)
+const duplicateCount = ref<number | null>(null)
 
 watch(() => props.show, async (v) => {
   if (v) {
@@ -117,6 +137,8 @@ watch(() => props.show, async (v) => {
     hasLairActions.value = false
     lairActionCount.value = null
     error.value = ''
+    isDuplicate.value = false
+    duplicateCount.value = null
     await nextTick()
     nameInput.value?.focus()
   }
@@ -137,6 +159,10 @@ function submit() {
     data.legendaryResistances = legendaryResistances.value
     data.legendaryActionPoints = legendaryActionPoints.value
     data.lairActionCount = hasLairActions.value ? (lairActionCount.value ?? 1) : null
+  }
+
+  if (isDuplicate.value && duplicateCount.value && duplicateCount.value >= 2) {
+    data.duplicateCount = duplicateCount.value
   }
 
   emit('submit', data)
@@ -217,6 +243,18 @@ function submit() {
 .lair-toggle { display: flex; flex-direction: column; }
 .toggle-label { display: flex; align-items: center; gap: var(--space-2); cursor: pointer; font-size: var(--text-base); }
 .toggle-label input[type="checkbox"] { accent-color: var(--color-accent-gold); width: 16px; height: 16px; }
+.duplicate-field {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-4);
+  gap: var(--space-3);
+}
+.duplicate-count {
+  transition: opacity var(--transition-fast), border-color var(--transition-fast);
+}
+.duplicate-count--disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
 .error-msg { color: var(--color-accent); font-size: var(--text-sm); padding: var(--space-2); background: rgba(233,69,96,0.1); border-radius: var(--radius-sm); }
 .btn-primary {
   padding: var(--space-2) var(--space-6);

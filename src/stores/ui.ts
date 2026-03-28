@@ -9,8 +9,8 @@ export const useUiStore = defineStore('ui', () => {
   const isEndCombatModalOpen = ref(false)
   const isShortcutsModalOpen = ref(false)
   const isPlayerManagerOpen = ref(false)
+  const isDsSetupOpen = ref(false)
 
-  // Multi-select state
   const selectedMonsterIds = ref<string[]>([])
   const lastClickedMonsterId = ref<string | null>(null)
 
@@ -37,6 +37,9 @@ export const useUiStore = defineStore('ui', () => {
 
   function openPlayerManager() { isPlayerManagerOpen.value = true }
   function closePlayerManager() { isPlayerManagerOpen.value = false }
+
+  function openDsSetup() { isDsSetupOpen.value = true }
+  function closeDsSetup() { isDsSetupOpen.value = false }
 
   function toggleMonsterSelection(id: string) {
     const idx = selectedMonsterIds.value.indexOf(id)
@@ -76,6 +79,8 @@ export const useUiStore = defineStore('ui', () => {
     isSettingsModalOpen,
     isEndCombatModalOpen,
     isShortcutsModalOpen,
+    isPlayerManagerOpen,
+    isDsSetupOpen,
     selectedMonsterIds,
     lastClickedMonsterId,
     openDeadPile,
@@ -88,9 +93,10 @@ export const useUiStore = defineStore('ui', () => {
     closeEndCombat,
     openShortcuts,
     closeShortcuts,
-    isPlayerManagerOpen,
     openPlayerManager,
     closePlayerManager,
+    openDsSetup,
+    closeDsSetup,
     toggleMonsterSelection,
     rangeSelectMonsters,
     clearMonsterSelection,

@@ -17,6 +17,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const activeRulesetId = ref('dnd5e')
   const isConfigured = ref(false)
   const playerSets = ref<PlayerSet[]>([])
+  const activePlayerSetName = ref('')
 
   function load() {
     try {
@@ -28,6 +29,7 @@ export const useSettingsStore = defineStore('settings', () => {
         activeRulesetId.value = data.activeRulesetId ?? 'dnd5e'
         isConfigured.value = data.isConfigured ?? false
         playerSets.value = data.playerSets ?? []
+        activePlayerSetName.value = data.activePlayerSetName ?? ''
       }
     } catch {
       // ignore corrupt data
@@ -41,6 +43,7 @@ export const useSettingsStore = defineStore('settings', () => {
       activeRulesetId: activeRulesetId.value,
       isConfigured: isConfigured.value,
       playerSets: playerSets.value,
+      activePlayerSetName: activePlayerSetName.value,
     }))
   }
 
@@ -48,12 +51,14 @@ export const useSettingsStore = defineStore('settings', () => {
     const id = nanoid()
     players.value.push({ id, name })
     turnOrder.value.push(id)
+    activePlayerSetName.value = ''
     persist()
   }
 
   function removePlayer(id: string) {
     players.value = players.value.filter(p => p.id !== id)
     turnOrder.value = turnOrder.value.filter(pid => pid !== id)
+    activePlayerSetName.value = ''
     persist()
   }
 
@@ -96,6 +101,7 @@ export const useSettingsStore = defineStore('settings', () => {
     if (!set) return
     players.value = set.playerNames.map(name => ({ id: nanoid(), name }))
     turnOrder.value = players.value.map(p => p.id)
+    activePlayerSetName.value = set.name
     persist()
   }
 
@@ -112,6 +118,7 @@ export const useSettingsStore = defineStore('settings', () => {
     activeRulesetId,
     isConfigured,
     playerSets,
+    activePlayerSetName,
     addPlayer,
     removePlayer,
     reorderTurns,

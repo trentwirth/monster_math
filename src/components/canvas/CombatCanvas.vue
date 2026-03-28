@@ -27,6 +27,8 @@
           @remove="onRemove(monster.id)"
           @toggleResistance="onToggleResistance(monster.id)"
           @toggleLegendaryAction="onToggleLegendaryAction(monster.id)"
+          @toggleActivated="onToggleActivated(monster.id)"
+          @toggleVillainAction="onToggleVillainAction(monster.id)"
         />
       </div>
     </TransitionGroup>
@@ -234,6 +236,14 @@ function onToggleResistance(monsterId: string) {
 }
 function onToggleLegendaryAction(monsterId: string) {
   combatStore.toggleLegendaryAction(monsterId)
+}
+function onToggleActivated(monsterId: string) {
+  const m = combatStore.liveMonsters.find(x => x.id === monsterId)
+  if (!m || m.rulesetId !== 'drawsteel') return
+  combatStore.setMonsterActivated(monsterId, !(m as any).activated)
+}
+function onToggleVillainAction(monsterId: string) {
+  combatStore.toggleVillainAction(monsterId)
 }
 </script>
 

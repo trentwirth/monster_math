@@ -1,14 +1,14 @@
 import { nanoid } from 'nanoid'
 import { registerRuleSet } from '../index'
 import type { RuleSet } from '../../types/ruleset'
-import type { BasicMonster, EliteMonster, Monster } from '../../types/monster'
+import type { Monster } from '../../types/monster'
 
 const dnd5e: RuleSet = {
   id: 'dnd5e',
   displayName: 'D&D 5th Edition',
   version: '1.0.0',
 
-  createBasicMonster(partial: Partial<BasicMonster>): BasicMonster {
+  createBasicMonster(partial: Record<string, any>): Monster {
     const maxHp = partial.maxHp ?? 10
     return {
       id: nanoid(),
@@ -21,7 +21,7 @@ const dnd5e: RuleSet = {
     }
   },
 
-  createEliteMonster(partial: Partial<EliteMonster>): EliteMonster {
+  createEliteMonster(partial: Record<string, any>): Monster {
     const maxHp = partial.maxHp ?? 10
     return {
       id: nanoid(),
@@ -48,7 +48,7 @@ const dnd5e: RuleSet = {
   },
 
   validateHp(monster: Monster, newHp: number): string | null {
-    if (newHp < 0) return null // We clamp to 0 in the store
+    if (newHp < 0) return null
     if (newHp > monster.maxHp) return `HP cannot exceed maximum (${monster.maxHp})`
     return null
   },

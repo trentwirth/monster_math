@@ -4,6 +4,8 @@
     :class="{
       'is-dead': monster.isDead,
       'monster-card--elite': monster.type === 'elite',
+      'monster-card--ds-squad': monster.type === 'ds-squad',
+      'monster-card--activated': isActivated,
       'is-selected': selected,
     }"
   >
@@ -19,7 +21,7 @@
       @remove="$emit('remove')"
     />
     <EliteMonsterCard
-      v-else
+      v-else-if="monster.type === 'elite'"
       :monster="monster"
       :players="players"
       :currentPlayerId="currentPlayerId"
@@ -28,16 +30,40 @@
       @toggleResistance="$emit('toggleResistance')"
       @toggleLegendaryAction="$emit('toggleLegendaryAction')"
     />
+    <DrawSteelBasicCard
+      v-else-if="monster.type === 'ds-basic'"
+      :monster="monster"
+      :players="players"
+      :currentPlayerId="currentPlayerId"
+      @damage="onDamage"
+      @remove="$emit('remove')"
+      @toggleActivated="$emit('toggleActivated')"
+      @toggleVillainAction="$emit('toggleVillainAction')"
+    />
+    <DrawSteelSquadCard
+      v-else-if="monster.type === 'ds-squad'"
+      :monster="monster"
+      :players="players"
+      :currentPlayerId="currentPlayerId"
+      @damage="onDamage"
+      @remove="$emit('remove')"
+      @toggleActivated="$emit('toggleActivated')"
+      @toggleVillainAction="$emit('toggleVillainAction')"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { Monster } from '../../types/monster'
+import { isDrawSteel } from '../../types/monster'
 import type { Player } from '../../types/player'
 import BasicMonsterCard from './BasicMonsterCard.vue'
 import EliteMonsterCard from './EliteMonsterCard.vue'
+import DrawSteelBasicCard from './DrawSteelBasicCard.vue'
+import DrawSteelSquadCard from './DrawSteelSquadCard.vue'
 
-defineProps<{
+const props = defineProps<{
   monster: Monster
   players: Player[]
   currentPlayerId?: string
@@ -49,7 +75,11 @@ const emit = defineEmits<{
   remove: []
   toggleResistance: []
   toggleLegendaryAction: []
+  toggleActivated: []
+  toggleVillainAction: []
 }>()
+
+const isActivated = computed(() => isDrawSteel(props.monster) && props.monster.activated)
 
 function onDamage(amount: number, playerId: string) {
   emit('damage', amount, playerId)
@@ -66,12 +96,12 @@ function onDamage(amount: number, playerId: string) {
   width: 260px;
   flex-shrink: 0;
   transition: opacity var(--transition-slow), transform var(--transition-slow),
-    filter var(--transition-slow), box-shadow var(--transition-fast);
+    filter var(--transition-slow), box-shadow var(--transition-fast),
+    background-color var(--transition-base), border-color var(--transition-base);
   position: relative;
   overflow: hidden;
 }
 
-/* Header grab zone — subtle tint that deepens on hover */
 .card-grab-zone {
   position: absolute;
   top: 0;
@@ -91,6 +121,22 @@ function onDamage(amount: number, playerId: string) {
   border-top: 3px solid var(--color-accent-gold);
   box-shadow: var(--shadow-elite);
 }
+.monster-card--ds-squad {
+  border-top: 3px solid var(--color-accent-gold);
+}
+
+/* Activated state — blood red */
+.monster-card--activated {
+  background: var(--color-ds-activated-bg);
+  border-color: var(--color-ds-activated-border);
+}
+.monster-card--activated .card-grab-zone {
+  background: linear-gradient(to bottom, var(--color-ds-activated-grab) 0%, transparent 100%);
+}
+.monster-card--activated:hover .card-grab-zone {
+  background: linear-gradient(to bottom, rgba(180, 30, 30, 0.18) 0%, transparent 100%);
+}
+
 .monster-card.is-dead {
   opacity: 0.22;
   filter: grayscale(1) brightness(0.55);

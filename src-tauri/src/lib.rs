@@ -71,13 +71,61 @@ async fn export_combat_csv(
     }
 }
 
+#[tauri::command]
+async fn save_combat_state(app: tauri::AppHandle, json: String, file_name: String) -> Result<String, String> {
+    use tauri_plugin_dialog::DialogExt;
+
+    let file_path = app
+        .dialog()
+        .file()
+        .set_title("Save Combat State")
+        .set_file_name(&file_name)
+        .add_filter("Monster Math Save", &["json"])
+        .blocking_save_file();
+
+    match file_path {
+        Some(path) => {
+            let path_str = path.to_string();
+            std::fs::write(&path_str, json.as_bytes())
+                .map_err(|e| format!("Failed to write file: {}", e))?;
+            Ok(path_str)
+        }
+        None => Err("Save cancelled".to_string()),
+    }
+}
+
+#[tauri::command]
+async fn load_combat_state(app: tauri::AppHandle) -> Result<String, String> {
+    use tauri_plugin_dialog::DialogExt;
+
+    let file_path = app
+        .dialog()
+        .file()
+        .set_title("Load Combat State")
+        .add_filter("Monster Math Save", &["json"])
+        .blocking_pick_file();
+
+    match file_path {
+        Some(path) => {
+            let path_str = path.to_string();
+            std::fs::read_to_string(&path_str)
+                .map_err(|e| format!("Failed to read file: {}", e))
+        }
+        None => Err("Load cancelled".to_string()),
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
-        .invoke_handler(tauri::generate_handler![export_combat_csv])
+        .invoke_handler(tauri::generate_handler![
+            export_combat_csv,
+            save_combat_state,
+            load_combat_state,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

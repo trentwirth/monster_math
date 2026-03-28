@@ -2,6 +2,8 @@
   <div id="app-root">
     <AppHeader />
 
+    <DrawSteelHeroBar v-if="settingsStore.activeRulesetId === 'drawsteel'" />
+
     <CombatCanvas
       :players="settingsStore.players"
       :currentPlayerId="combatStore.currentPlayer?.id"
@@ -46,15 +48,21 @@
       :show="uiStore.isPlayerManagerOpen"
       @close="uiStore.closePlayerManager()"
     />
+
+    <DrawSteelSetupModal
+      :show="uiStore.isDsSetupOpen"
+      @submit="onDsSetup"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useCombatStore } from './stores/combat'
 import { useSettingsStore } from './stores/settings'
 import { useUiStore } from './stores/ui'
 import AppHeader from './components/layout/AppHeader.vue'
+import DrawSteelHeroBar from './components/layout/DrawSteelHeroBar.vue'
 import CombatCanvas from './components/canvas/CombatCanvas.vue'
 import SettingsModal from './components/modals/SettingsModal.vue'
 import AddMonsterModal from './components/modals/AddMonsterModal.vue'
@@ -62,18 +70,21 @@ import DeadPileModal from './components/modals/DeadPileModal.vue'
 import EndCombatModal from './components/modals/EndCombatModal.vue'
 import ShortcutsModal from './components/modals/ShortcutsModal.vue'
 import PlayerManagerModal from './components/modals/PlayerManagerModal.vue'
+import DrawSteelSetupModal from './components/modals/DrawSteelSetupModal.vue'
 
 const combatStore = useCombatStore()
 const settingsStore = useSettingsStore()
 const uiStore = useUiStore()
 
+// Holds monster data while we wait for DS setup to complete
+const pendingMonsterData = ref<Record<string, any> | null>(null)
+
 function onKeyDown(e: KeyboardEvent) {
   const meta = e.metaKey || e.ctrlKey
   const anyModalOpen = uiStore.isSettingsModalOpen || uiStore.isAddMonsterModalOpen
     || uiStore.isDeadPileOpen || uiStore.isEndCombatModalOpen || uiStore.isShortcutsModalOpen
-    || !settingsStore.isConfigured
+    || uiStore.isDsSetupOpen || !settingsStore.isConfigured
 
-  // Cmd+N / Cmd+E — open add monster even if canvas has focus
   if (meta && e.key === 'n') {
     e.preventDefault()
     if (!anyModalOpen) uiStore.openAddMonster('basic')
@@ -97,12 +108,15 @@ function onKeyDown(e: KeyboardEvent) {
   const tag = (e.target as HTMLElement)?.tagName
   if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
 
+  const isDS = settingsStore.activeRulesetId === 'drawsteel'
   if (e.key === 'ArrowLeft') {
     e.preventDefault()
-    combatStore.retreatTurn()
+    if (isDS) combatStore.retreatRoundDirectly()
+    else combatStore.retreatTurn()
   } else if (e.key === 'ArrowRight') {
     e.preventDefault()
-    combatStore.advanceTurn()
+    if (isDS) combatStore.advanceRound()
+    else combatStore.advanceTurn()
   } else if (e.key === 'Escape') {
     uiStore.clearMonsterSelection()
   }
@@ -112,15 +126,37 @@ onMounted(() => window.addEventListener('keydown', onKeyDown))
 onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
 
 function onAddMonster(data: Record<string, any>) {
+  const isDS = settingsStore.activeRulesetId === 'drawsteel'
+
+  // If DS ruleset and setup not done yet, show setup modal first
+  if (isDS && !combatStore.dsSetupDone) {
+    pendingMonsterData.value = data
+    uiStore.openDsSetup()
+    return
+  }
+
+  addMonsterWithData(data)
+}
+
+function onDsSetup(heroCount: number, avgVictories: number) {
+  combatStore.initDrawSteelCombat(heroCount, avgVictories)
+  uiStore.closeDsSetup()
+  if (pendingMonsterData.value) {
+    addMonsterWithData(pendingMonsterData.value)
+    pendingMonsterData.value = null
+  }
+}
+
+function addMonsterWithData(data: Record<string, any>) {
   const count = typeof data.duplicateCount === 'number' && data.duplicateCount > 1
     ? data.duplicateCount : 0
   if (count > 0) {
     const baseName = data.name
     for (let i = 1; i <= count; i++) {
-      combatStore.addMonster({ ...data, name: `${baseName} ${i}`, duplicateCount: undefined } as any)
+      combatStore.addMonster({ ...data, name: `${baseName} ${i}`, duplicateCount: undefined })
     }
   } else {
-    combatStore.addMonster(data as any)
+    combatStore.addMonster(data)
   }
 }
 

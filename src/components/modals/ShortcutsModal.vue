@@ -52,21 +52,26 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import IconButton from '../shared/IconButton.vue'
+import { useSettingsStore } from '../../stores/settings'
 
 defineProps<{ show: boolean }>()
 defineEmits(['close'])
 
-const combatShortcuts = [
-  { keys: '←', desc: 'Previous turn' },
-  { keys: '→', desc: 'Next turn' },
-]
+const settingsStore = useSettingsStore()
+const isDS = computed(() => settingsStore.activeRulesetId === 'drawsteel')
 
-const monsterShortcuts = [
-  { keys: '⌘+N', desc: 'Add basic monster' },
-  { keys: '⌘+E', desc: 'Add elite monster' },
+const combatShortcuts = computed(() => [
+  { keys: '←', desc: isDS.value ? 'Previous round' : 'Previous turn' },
+  { keys: '→', desc: isDS.value ? 'Next round' : 'Next turn' },
+])
+
+const monsterShortcuts = computed(() => [
+  { keys: '⌘+N', desc: isDS.value ? 'Add creature' : 'Add basic monster' },
+  { keys: '⌘+E', desc: isDS.value ? 'Add squad' : 'Add elite monster' },
   { keys: '⌘+D', desc: 'Duplicate selected card(s)' },
-]
+])
 
 const selectionShortcuts = [
   { keys: '⌘+Click', desc: 'Toggle card in selection' },

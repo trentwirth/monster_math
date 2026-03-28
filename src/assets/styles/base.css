@@ -23,6 +23,12 @@
   --color-warning: #c87818;
   --color-dead-overlay: rgba(20, 20, 16, 0.6);
 
+  /* Draw Steel specific */
+  --color-ds-activated-bg: rgba(90, 12, 12, 0.5);
+  --color-ds-activated-border: rgba(180, 35, 35, 0.45);
+  --color-ds-activated-grab: rgba(160, 20, 20, 0.12);
+  --color-ds-activated-check: #c02020;
+
   /* Spacing (8-point grid) */
   --space-1: 4px;
   --space-2: 8px;

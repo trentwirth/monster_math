@@ -9,6 +9,7 @@ import './assets/styles/animations.css'
 
 // Register rulesets
 import './rulesets/dnd5e/index'
+import './rulesets/drawsteel/index'
 
 const app = createApp(App)
 app.use(createPinia())

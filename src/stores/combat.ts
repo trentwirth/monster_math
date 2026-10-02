@@ -1,11 +1,26 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { nanoid } from 'nanoid'
-import type { Monster, DrawSteelBasicMonster, DrawSteelSquadMonster } from '../types/monster'
+import type { Monster, DrawSteelBasicMonster, DrawSteelSquadMonster, DamageEvent } from '../types/monster'
 import { isDrawSteel } from '../types/monster'
 import type { RoundRecord } from '../types/combat'
 import { getRuleSet } from '../rulesets/index'
 import { useSettingsStore } from './settings'
+
+interface CombatSnapshot {
+  monsters: Monster[]
+  currentRound: number
+  currentTurnIndex: number
+  damageLog: DamageEvent[]
+  completedRounds: RoundRecord[]
+  isActive: boolean
+  dsSetupDone: boolean
+  dsMalice: number
+  dsLivingHeroes: number
+  dsVictories: number
+  dsActiveHeroId: string | null
+  dsHeroTurnDone: Record<string, boolean>
+}
 
 export const useCombatStore = defineStore('combat', () => {
   const monsters = ref<Monster[]>([])
@@ -24,6 +39,45 @@ export const useCombatStore = defineStore('combat', () => {
   const dsVictories = ref(0)
   const dsActiveHeroId = ref<string | null>(null)
   const dsHeroTurnDone = ref<Record<string, boolean>>({})
+
+  // Undo history
+  const undoHistory = ref<CombatSnapshot[]>([])
+  const canUndo = computed(() => undoHistory.value.length > 0)
+
+  function saveSnapshot() {
+    undoHistory.value.push({
+      monsters: structuredClone(monsters.value),
+      currentRound: currentRound.value,
+      currentTurnIndex: currentTurnIndex.value,
+      damageLog: structuredClone(damageLog.value),
+      completedRounds: structuredClone(completedRounds.value),
+      isActive: isActive.value,
+      dsSetupDone: dsSetupDone.value,
+      dsMalice: dsMalice.value,
+      dsLivingHeroes: dsLivingHeroes.value,
+      dsVictories: dsVictories.value,
+      dsActiveHeroId: dsActiveHeroId.value,
+      dsHeroTurnDone: structuredClone(dsHeroTurnDone.value),
+    })
+    if (undoHistory.value.length > 50) undoHistory.value.shift()
+  }
+
+  function undo() {
+    const snapshot = undoHistory.value.pop()
+    if (!snapshot) return
+    monsters.value = snapshot.monsters
+    currentRound.value = snapshot.currentRound
+    currentTurnIndex.value = snapshot.currentTurnIndex
+    damageLog.value = snapshot.damageLog
+    completedRounds.value = snapshot.completedRounds
+    isActive.value = snapshot.isActive
+    dsSetupDone.value = snapshot.dsSetupDone
+    dsMalice.value = snapshot.dsMalice
+    dsLivingHeroes.value = snapshot.dsLivingHeroes
+    dsVictories.value = snapshot.dsVictories
+    dsActiveHeroId.value = snapshot.dsActiveHeroId
+    dsHeroTurnDone.value = snapshot.dsHeroTurnDone
+  }
 
   // Getters
   const liveMonsters = computed(() => {
@@ -73,10 +127,12 @@ export const useCombatStore = defineStore('combat', () => {
   }
 
   function adjustDsMalice(delta: number) {
+    saveSnapshot()
     dsMalice.value = Math.max(0, dsMalice.value + delta)
   }
 
   function setDsLivingHeroes(count: number) {
+    saveSnapshot()
     dsLivingHeroes.value = Math.max(0, count)
   }
 
@@ -98,6 +154,7 @@ export const useCombatStore = defineStore('combat', () => {
     if (idx === -1) return
     const m = monsters.value[idx]
     if (!isDrawSteel(m)) return
+    saveSnapshot()
     monsters.value[idx] = {
       ...m,
       activated,
@@ -110,12 +167,14 @@ export const useCombatStore = defineStore('combat', () => {
     if (idx === -1) return
     const m = monsters.value[idx]
     if (!isDrawSteel(m)) return
+    saveSnapshot()
     monsters.value[idx] = { ...m, villainActionUsed: !m.villainActionUsed }
   }
 
   // ── Core combat ──────────────────────────────────────────────────────────────
 
   function addMonster(data: Record<string, any>) {
+    saveSnapshot()
     const settings = useSettingsStore()
     const ruleset = getRuleSet(settings.activeRulesetId)
     let monster: Monster
@@ -132,12 +191,14 @@ export const useCombatStore = defineStore('combat', () => {
   }
 
   function removeMonster(id: string) {
+    saveSnapshot()
     monsters.value = monsters.value.filter(m => m.id !== id)
   }
 
   function applyDamage(monsterId: string, amount: number, playerId: string) {
     const idx = monsters.value.findIndex(m => m.id === monsterId)
     if (idx === -1) return
+    saveSnapshot()
     const monster = monsters.value[idx]
     const newHp = Math.max(0, Math.min(monster.maxHp, monster.currentHp - amount))
     monsters.value[idx] = { ...monster, currentHp: newHp, isDead: newHp <= 0 }
@@ -151,6 +212,7 @@ export const useCombatStore = defineStore('combat', () => {
     if (idx === -1) return
     const monster = monsters.value[idx]
     if (monster.type !== 'elite') return
+    saveSnapshot()
     const used = monster.legendaryResistancesUsed
     const total = monster.legendaryResistances
     monsters.value[idx] = { ...monster, legendaryResistancesUsed: used >= total ? 0 : used + 1 }
@@ -161,6 +223,7 @@ export const useCombatStore = defineStore('combat', () => {
     if (idx === -1) return
     const monster = monsters.value[idx]
     if (monster.type !== 'elite') return
+    saveSnapshot()
     const used = monster.legendaryActionsUsed
     const total = monster.legendaryActionPoints
     monsters.value[idx] = { ...monster, legendaryActionsUsed: used >= total ? 0 : used + 1 }
@@ -171,12 +234,14 @@ export const useCombatStore = defineStore('combat', () => {
     if (idx === -1) return
     const monster = monsters.value[idx]
     if (monster.type !== 'elite' || monster.lairActionCount === null) return
+    saveSnapshot()
     const used = monster.lairActionsUsed
     const total = monster.lairActionCount
     monsters.value[idx] = { ...monster, lairActionsUsed: used >= total ? 0 : used + 1 }
   }
 
   function advanceTurn() {
+    saveSnapshot()
     const settings = useSettingsStore()
     const total = settings.turnOrder.length
     if (total === 0) return
@@ -188,6 +253,7 @@ export const useCombatStore = defineStore('combat', () => {
   }
 
   function retreatTurn() {
+    saveSnapshot()
     const settings = useSettingsStore()
     const total = settings.turnOrder.length
     if (total === 0) return
@@ -203,10 +269,12 @@ export const useCombatStore = defineStore('combat', () => {
 
   // For DS: advance/retreat round directly (no turn stepping)
   function retreatRoundDirectly() {
+    saveSnapshot()
     if (currentRound.value > 1) currentRound.value--
   }
 
   function advanceRound() {
+    saveSnapshot()
     const settings = useSettingsStore()
     const isDS = settings.activeRulesetId === 'drawsteel'
 
@@ -261,6 +329,7 @@ export const useCombatStore = defineStore('combat', () => {
   function duplicateMonster(id: string) {
     const original = monsters.value.find(m => m.id === id)
     if (!original) return
+    saveSnapshot()
 
     const baseName = original.name.replace(/ \d+$/, '').trim()
     const escapedBase = baseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -304,6 +373,7 @@ export const useCombatStore = defineStore('combat', () => {
     const fromIdx = monsters.value.findIndex(m => m.id === fromId)
     const toIdx = monsters.value.findIndex(m => m.id === toId)
     if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return
+    saveSnapshot()
     const arr = [...monsters.value]
     const [item] = arr.splice(fromIdx, 1)
     arr.splice(toIdx, 0, item)
@@ -381,6 +451,7 @@ export const useCombatStore = defineStore('combat', () => {
     dsVictories.value = c.dsVictories ?? 0
     dsActiveHeroId.value = c.dsActiveHeroId ?? null
     dsHeroTurnDone.value = c.dsHeroTurnDone ?? {}
+    undoHistory.value = []
 
     return { ok: true }
   }
@@ -400,6 +471,7 @@ export const useCombatStore = defineStore('combat', () => {
     dsVictories.value = 0
     dsActiveHeroId.value = null
     dsHeroTurnDone.value = {}
+    undoHistory.value = []
   }
 
   return {
@@ -449,8 +521,8 @@ export const useCombatStore = defineStore('combat', () => {
     resetCombat,
     exportState,
     importState,
+    undo,
+    canUndo,
   }
 })
 
-// Re-export for convenience
-import type { DamageEvent } from '../types/monster'

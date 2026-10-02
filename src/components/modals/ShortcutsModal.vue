@@ -71,6 +71,7 @@ const monsterShortcuts = computed(() => [
   { keys: '⌘+N', desc: isDS.value ? 'Add creature' : 'Add basic monster' },
   { keys: '⌘+E', desc: isDS.value ? 'Add squad' : 'Add elite monster' },
   { keys: '⌘+D', desc: 'Duplicate selected card(s)' },
+  { keys: '⌘+Z', desc: 'Undo last action' },
 ])
 
 const selectionShortcuts = [

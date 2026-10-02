@@ -85,6 +85,12 @@ function onKeyDown(e: KeyboardEvent) {
     || uiStore.isDeadPileOpen || uiStore.isEndCombatModalOpen || uiStore.isShortcutsModalOpen
     || uiStore.isDsSetupOpen || !settingsStore.isConfigured
 
+  if (meta && e.key === 'z') {
+    e.preventDefault()
+    if (!anyModalOpen) combatStore.undo()
+    return
+  }
+
   if (meta && e.key === 'n') {
     e.preventDefault()
     if (!anyModalOpen) uiStore.openAddMonster('basic')

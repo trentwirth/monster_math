@@ -46,18 +46,18 @@ export const useCombatStore = defineStore('combat', () => {
 
   function saveSnapshot() {
     undoHistory.value.push({
-      monsters: structuredClone(monsters.value),
+      monsters: JSON.parse(JSON.stringify(monsters.value)),
       currentRound: currentRound.value,
       currentTurnIndex: currentTurnIndex.value,
-      damageLog: structuredClone(damageLog.value),
-      completedRounds: structuredClone(completedRounds.value),
+      damageLog: JSON.parse(JSON.stringify(damageLog.value)),
+      completedRounds: JSON.parse(JSON.stringify(completedRounds.value)),
       isActive: isActive.value,
       dsSetupDone: dsSetupDone.value,
       dsMalice: dsMalice.value,
       dsLivingHeroes: dsLivingHeroes.value,
       dsVictories: dsVictories.value,
       dsActiveHeroId: dsActiveHeroId.value,
-      dsHeroTurnDone: structuredClone(dsHeroTurnDone.value),
+      dsHeroTurnDone: JSON.parse(JSON.stringify(dsHeroTurnDone.value)),
     })
     if (undoHistory.value.length > 50) undoHistory.value.shift()
   }
